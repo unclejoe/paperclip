@@ -41,6 +41,7 @@ import {
   writeProjectSortMode,
 } from "../lib/project-order";
 import type { Project } from "@paperclipai/shared";
+import { useTranslation } from "@/i18n";
 
 type ProjectSidebarSlot = ReturnType<typeof usePluginSlots>["slots"][number];
 
@@ -144,7 +145,7 @@ function ProjectItem({
             style={{ backgroundColor: project.color ?? "#6366f1" }}
           />
           <span className="flex-1 truncate">{project.name}</span>
-          {project.pauseReason === "budget" ? <BudgetSidebarMarker title="Project paused by budget" /> : null}
+          {project.pauseReason === "budget" ? <BudgetSidebarMarker title={t("sidebar.projectBudgetPaused")} /> : null}
         </NavLink>
 
         <DropdownMenu>
@@ -172,7 +173,7 @@ function ProjectItem({
               disabled={leaving}
             >
               {leaving ? <Loader2 className="size-4 motion-safe:animate-spin" /> : <LogOut className="size-4" />}
-              <span>{leaving ? "Leaving..." : "Leave project"}</span>
+              <span>{leaving ? t("sidebar.leaving") : t("sidebar.leaveProject")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -228,6 +229,7 @@ function SortableProjectItem(props: ProjectItemProps) {
 }
 
 export function SidebarProjects() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(true);
   const { selectedCompany, selectedCompanyId } = useCompany();
   const { openNewProject } = useDialogActions();
@@ -383,21 +385,21 @@ export function SidebarProjects() {
 
   return (
     <SidebarSection
-      label="Projects"
+      label={t("sidebar.projects")}
       collapsible={{ open, onOpenChange: setOpen }}
       headerAction={{
-        ariaLabel: "New project",
+        ariaLabel: t("sidebar.newProject"),
         icon: Plus,
         onClick: openNewProject,
       }}
       menu={{
-        ariaLabel: "Projects section actions",
+        ariaLabel: t("sidebar.projects"),
         actions: [
-          { type: "item", label: "Browse projects", icon: FolderOpen, href: "/projects" },
+          { type: "item", label: t("sidebar.browseProjects"), icon: FolderOpen, href: "/projects" },
           { type: "separator" },
         ],
-        radioLabel: "Project sort",
-        radioChoices: PROJECT_SORT_CHOICES,
+        radioLabel: t("sidebar.projectSort"),
+        radioChoices: PROJECT_SORT_CHOICES.map((c) => ({ ...c, label: t(`sidebar.${c.value}`) })),
         radioValue: sortMode,
         onRadioValueChange: persistSortMode,
       }}
