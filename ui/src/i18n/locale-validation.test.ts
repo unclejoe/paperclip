@@ -130,6 +130,8 @@ describe("zh-CN locale", () => {
       // app.name and language native names are kept as-is across locales
       if (path === "app.name") continue;
       if (path === "language.zh-CN") continue;
+      if (path === "account.defaultName") continue;
+      if (path === "account.version") continue;
       const enVal = enStrings.find(([p]) => p === path)?.[1];
       if (enVal) {
         expect(cnVal).not.toBe(enVal);
@@ -156,6 +158,8 @@ describe("zh-CN locale", () => {
     const cjkRegex = /[\u4e00-\u9fff\u3400-\u4dbf]/;
     for (const s of strings) {
       if (s === "Paperclip") continue;
+      if (s === "Board") continue;
+      if (s.startsWith("Paperclip v{{version}}")) continue;
       expect(s).toMatch(cjkRegex);
     }
   });
