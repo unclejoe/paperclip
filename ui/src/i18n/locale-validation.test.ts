@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { t } from ".";
 import en from "./locales/en.json";
+import zhCN from "./locales/zh-CN.json";
+import zhTW from "./locales/zh-TW.json";
 import { localeMessages } from "./locales";
 import { validateLocaleMessages } from "./locale-validation";
 
@@ -99,4 +101,73 @@ describe("locale validation", () => {
       "message is too long: 200 characters exceeds 133",
     ]);
   });
+});
+
+describe("zh-CN locale", () => {
+  it("passes structure validation against English", () => {
+    const errors = validateLocaleMessages(zhCN, en);
+    expect(errors, "zh-CN validation errors:\n" + errors.join("\n")).toEqual([]);
+  });
+
+  it("has all leaf strings translated (no raw English copy)", () => {
+    function flatStrings(obj: Record<string, unknown>, prefix = ""): Array<[string, string]> {
+      const result: Array<[string, string]> = [];
+      for (const [key, val] of Object.entries(obj)) {
+        const path = prefix ? `${prefix}.${key}` : key;
+        if (typeof val === "string") {
+          result.push([path, val]);
+        } else if (val && typeof val === "object") {
+          result.push(...flatStrings(val as Record<string, unknown>, path));
+        }
+      }
+      return result;
+    }
+
+    const cnStrings = flatStrings(zhCN as Record<string, unknown>);
+    const enStrings = flatStrings(en as Record<string, unknown>);
+
+    for (const [path, cnVal] of cnStrings) {
+      // app.name and language native names are kept as-is across locales
+      if (path === "app.name") continue;
+      if (path === "language.zh-CN") continue;
+      const enVal = enStrings.find(([p]) => p === path)?.[1];
+      if (enVal) {
+        expect(cnVal).not.toBe(enVal);
+      }
+    }
+  });
+
+  it("uses Chinese characters in translations", () => {
+    function collectStrings(obj: Record<string, unknown>): string[] {
+      const result: string[] = [];
+      for (const val of Object.values(obj)) {
+        if (typeof val === "string") {
+          result.push(val);
+        } else if (val && typeof val === "object") {
+          result.push(...collectStrings(val as Record<string, unknown>));
+        }
+      }
+      return result;
+    }
+
+    const strings = collectStrings(zhCN as Record<string, unknown>);
+    // Each string should contain at least one CJK character
+    // Exclude app.name — brand name kept as-is across locales
+    const cjkRegex = /[\u4e00-\u9fff\u3400-\u4dbf]/;
+    for (const s of strings) {
+      if (s === "Paperclip") continue;
+      expect(s).toMatch(cjkRegex);
+    }
+  });
+});
+
+describe("zh-TW locale", () => {
+  it("passes structure validation against English", () => {
+    const errors = validateLocaleMessages(zhTW, en);
+    expect(errors, "zh-TW validation errors:\n" + errors.join("\n")).toEqual([]);
+  });
+
+  // Translation quality tests (no raw English copy, Chinese characters) omitted for zh-TW
+  // because zh-TW locale is not in scope for the current zh-CN i18n implementation.
+  // These tests should be re-enabled when zh-TW translations are properly added.
 });
