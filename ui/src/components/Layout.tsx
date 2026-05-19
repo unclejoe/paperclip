@@ -19,6 +19,7 @@ import { WorktreeBanner } from "./WorktreeBanner";
 import { DevRestartBanner } from "./DevRestartBanner";
 import { ResizableSidebarPane } from "./ResizableSidebarPane";
 import { SidebarAccountMenu } from "./SidebarAccountMenu";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useDialogActions } from "../context/DialogContext";
 import { GeneralSettingsProvider } from "../context/GeneralSettingsContext";
 import { usePanel } from "../context/PanelContext";
@@ -391,6 +392,7 @@ export function Layout() {
                 )}
               </div>
             </div>
+            <LanguageSwitcher />
             <SidebarAccountMenu
               deploymentMode={health?.deploymentMode}
               instanceSettingsTarget={instanceSettingsTarget}
@@ -410,6 +412,7 @@ export function Layout() {
                 )}
               </ResizableSidebarPane>
             </div>
+            <LanguageSwitcher />
             <SidebarAccountMenu
               deploymentMode={health?.deploymentMode}
               instanceSettingsTarget={instanceSettingsTarget}
