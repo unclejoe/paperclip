@@ -5,6 +5,7 @@ import type {
   IssueGraphLivenessAutoRecoveryPreview,
   PatchInstanceExperimentalSettings,
 } from "@paperclipai/shared";
+import { useTranslation } from "@/i18n";
 import { instanceSettingsApi } from "@/api/instanceSettings";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { queryKeys } from "../lib/queryKeys";
@@ -45,24 +46,24 @@ function RecoveryPreviewDialog({
   onEnableAndRun: () => void;
   isPending: boolean;
 }) {
+  const { t } = useTranslation();
   const count = preview?.recoverableFindings ?? 0;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Confirm auto-recovery</DialogTitle>
+          <DialogTitle>{t("experimental.confirmAutoRecovery")}</DialogTitle>
           <DialogDescription>
             {preview
-              ? `${count} recovery ${count === 1 ? "task" : "tasks"} match the last ${preview.lookbackHours} hours.`
-              : "Checking recovery candidates before enabling."}
+              ? t("experimental.recoveryDescription", { count, taskWord: t(count === 1 ? "experimental.recoveryTask" : "experimental.recoveryTask_plural"), lookbackHours: preview.lookbackHours })
+              : t("experimental.checkingRecovery")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="max-h-[min(28rem,65vh)] space-y-3 overflow-y-auto pr-1">
           {preview && preview.items.length === 0 ? (
             <div className="rounded-md border border-border bg-muted/30 px-3 py-4 text-sm text-muted-foreground">
-              No recovery tasks would be created right now. Auto-recovery can still run for future liveness incidents in
-              this window.
+              {t("experimental.noRecoveryTasks")}
             </div>
           ) : null}
 
@@ -82,7 +83,7 @@ function RecoveryPreviewDialog({
               <p className="mt-1 text-sm text-foreground">{item.title}</p>
               <p className="mt-1 text-xs text-muted-foreground">{item.reason}</p>
               <div className="mt-2 text-xs text-muted-foreground">
-                Recovery target:{" "}
+                {t("experimental.recoveryTarget")}{" "}
                 <a
                   href={issueHref(item.recoveryIdentifier, item.recoveryIssueId)}
                   className="text-primary underline-offset-2 hover:underline"
@@ -96,9 +97,7 @@ function RecoveryPreviewDialog({
 
         {preview && preview.skippedOutsideLookback > 0 ? (
           <p className="text-xs text-muted-foreground">
-            {preview.skippedOutsideLookback} current{" "}
-            {preview.skippedOutsideLookback === 1 ? "finding is" : "findings are"} outside the configured lookback and
-            will not be touched.
+            {t("experimental.skippedOutsideLookback", { count: preview.skippedOutsideLookback, findingWord: t(preview.skippedOutsideLookback === 1 ? "experimental.findingIs" : "experimental.findingsAre") })}
           </p>
         ) : null}
 
@@ -110,7 +109,7 @@ function RecoveryPreviewDialog({
             Enable only
           </Button>
           <Button onClick={onEnableAndRun} disabled={isPending || !preview}>
-            {count > 0 ? `Enable and create ${count}` : "Enable"}
+            {count > 0 ? t("experimental.enableAndCreate", { count }) : t("experimental.enable")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -119,6 +118,7 @@ function RecoveryPreviewDialog({
 }
 
 export function InstanceExperimentalSettings() {
+  const { t } = useTranslation();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
   const [actionError, setActionError] = useState<string | null>(null);
@@ -128,8 +128,8 @@ export function InstanceExperimentalSettings() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: "Instance Settings" },
-      { label: "Experimental" },
+      { label: t("settings.instanceSettings") },
+      { label: t("experimental.title") },
     ]);
   }, [setBreadcrumbs]);
 
@@ -149,7 +149,7 @@ export function InstanceExperimentalSettings() {
       ]);
     },
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to update experimental settings.");
+      setActionError(error instanceof Error ? error.message : t("experimental.failedToUpdate"));
     },
   });
 
@@ -162,7 +162,7 @@ export function InstanceExperimentalSettings() {
       setPreviewDialogOpen(true);
     },
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to preview recovery tasks.");
+      setActionError(error instanceof Error ? error.message : t("experimental.failedToPreview"));
     },
   });
 
@@ -178,7 +178,7 @@ export function InstanceExperimentalSettings() {
       ]);
     },
     onError: (error) => {
-      setActionError(error instanceof Error ? error.message : "Failed to create recovery tasks.");
+      setActionError(error instanceof Error ? error.message : t("experimental.failedToCreateRecovery"));
     },
   });
 
@@ -190,7 +190,7 @@ export function InstanceExperimentalSettings() {
   }, [experimentalQuery.data?.issueGraphLivenessAutoRecoveryLookbackHours]);
 
   if (experimentalQuery.isLoading) {
-    return <div className="text-sm text-muted-foreground">Loading experimental settings...</div>;
+    return <div className="text-sm text-muted-foreground">{t("experimental.loadingSettings")}</div>;
   }
 
   if (experimentalQuery.error) {
@@ -198,7 +198,7 @@ export function InstanceExperimentalSettings() {
       <div className="text-sm text-destructive">
         {experimentalQuery.error instanceof Error
           ? experimentalQuery.error.message
-          : "Failed to load experimental settings."}
+          : t("experimental.failedToLoad")}
       </div>
     );
   }

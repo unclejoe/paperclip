@@ -171,7 +171,59 @@ describe("zh-TW locale", () => {
     expect(errors, "zh-TW validation errors:\n" + errors.join("\n")).toEqual([]);
   });
 
-  // Translation quality tests (no raw English copy, Chinese characters) omitted for zh-TW
-  // because zh-TW locale is not in scope for the current zh-CN i18n implementation.
-  // These tests should be re-enabled when zh-TW translations are properly added.
+  it("has all leaf strings translated (no raw English copy)", () => {
+    function flatStrings(obj: Record<string, unknown>, prefix = ""): Array<[string, string]> {
+      const result: Array<[string, string]> = [];
+      for (const [key, val] of Object.entries(obj)) {
+        const path = prefix ? `${prefix}.${key}` : key;
+        if (typeof val === "string") {
+          result.push([path, val]);
+        } else if (val && typeof val === "object") {
+          result.push(...flatStrings(val as Record<string, unknown>, path));
+        }
+      }
+      return result;
+    }
+
+    const twStrings = flatStrings(zhTW as Record<string, unknown>);
+    const enStrings = flatStrings(en as Record<string, unknown>);
+
+    for (const [path, twVal] of twStrings) {
+      // app.name and language native names are kept as-is across locales
+      if (path === "app.name") continue;
+      if (path === "language.zh-CN") continue;
+      if (path === "language.zh-TW") continue;
+      if (path === "account.defaultName") continue;
+      if (path === "account.version") continue;
+      const enVal = enStrings.find(([p]) => p === path)?.[1];
+      if (enVal) {
+        expect(twVal).not.toBe(enVal);
+      }
+    }
+  });
+
+  it("uses Chinese characters in translations", () => {
+    function collectStrings(obj: Record<string, unknown>): string[] {
+      const result: string[] = [];
+      for (const val of Object.values(obj)) {
+        if (typeof val === "string") {
+          result.push(val);
+        } else if (val && typeof val === "object") {
+          result.push(...collectStrings(val as Record<string, unknown>));
+        }
+      }
+      return result;
+    }
+
+    const strings = collectStrings(zhTW as Record<string, unknown>);
+    // Each string should contain at least one CJK character
+    // Exclude app.name — brand name kept as-is across locales
+    const cjkRegex = /[\u4e00-\u9fff\u3400-\u4dbf]/;
+    for (const s of strings) {
+      if (s === "Paperclip") continue;
+      if (s === "Board") continue;
+      if (s.startsWith("Paperclip v{{version}}")) continue;
+      expect(s).toMatch(cjkRegex);
+    }
+  });
 });

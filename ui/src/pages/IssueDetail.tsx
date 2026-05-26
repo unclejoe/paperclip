@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode, type Ref } from "react";
+import { useTranslation } from "../i18n";
 import { pickTextColorForPillBg } from "@/lib/color-contrast";
 import { Link, useLocation, useNavigate, useNavigationType, useParams } from "@/lib/router";
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient, type InfiniteData, type QueryClient } from "@tanstack/react-query";
@@ -177,6 +178,9 @@ const TREE_CONTROL_MODE_LABEL: Record<IssueTreeControlMode, string> = {
   resume: "Resume subtree",
   cancel: "Cancel subtree",
   restore: "Restore subtree",
+};
+const getTreeControlModeLabel = (mode: IssueTreeControlMode): string => {
+  return TREE_CONTROL_MODE_LABEL[mode];
 };
 const LEAF_WORK_CONTROL_MODE_LABEL: Partial<Record<IssueTreeControlMode, string>> = {
   pause: "Pause work",
@@ -884,7 +888,7 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
             disabled={commentsLoadingOlder}
             onClick={onLoadOlderComments}
           >
-            {commentsLoadingOlder ? "Loading earlier comments..." : "Load earlier comments"}
+            {commentsLoadingOlder ? t("ui.loadingEarlierComments") : t("ui.loadEarlierComments")}
           </Button>
         </div>
       ) : null}
@@ -1224,6 +1228,7 @@ function IssueDetailActivityTab({
 }
 
 export function IssueDetail() {
+  const { t } = useTranslation();
   const { issueId } = useParams<{ issueId: string }>();
   const { selectedCompanyId } = useCompany();
   const { openNewIssue } = useDialogActions();
@@ -2049,7 +2054,7 @@ export function IssueDetail() {
           return;
         } catch (err) {
           pushToast({
-            title: "Cancel failed",
+            title: t("ui.cancelFailed"),
             body: err instanceof Error ? err.message : "Unable to cancel the queued comment",
             tone: "error",
           });
@@ -2175,7 +2180,7 @@ export function IssueDetail() {
     },
     onError: (err) => {
       pushToast({
-        title: "Submit failed",
+        title: t("ui.submitFailed"),
         body: err instanceof Error ? err.message : "Unable to submit answers",
         tone: "error",
       });
@@ -2196,7 +2201,7 @@ export function IssueDetail() {
     },
     onError: (err) => {
       pushToast({
-        title: "Cancel failed",
+        title: t("ui.cancelFailed"),
         body: err instanceof Error ? err.message : "Unable to cancel the question",
         tone: "error",
       });
@@ -2274,7 +2279,7 @@ export function IssueDetail() {
           return;
         } catch (err) {
           pushToast({
-            title: "Cancel failed",
+            title: t("ui.cancelFailed"),
             body: err instanceof Error ? err.message : "Unable to cancel the queued comment",
             tone: "error",
           });
@@ -2436,7 +2441,7 @@ export function IssueDetail() {
     },
     onError: (err) => {
       pushToast({
-        title: "Cancel failed",
+        title: t("ui.cancelFailed"),
         body: err instanceof Error ? err.message : "Unable to cancel the queued comment",
         tone: "error",
       });

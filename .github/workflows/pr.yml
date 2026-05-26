@@ -54,6 +54,9 @@ jobs:
           PAPERCLIP_RELEASE_BOOTSTRAP_BASE_SHA="${{ github.event.pull_request.base.sha }}" \
             node ./scripts/check-release-package-bootstrap.mjs "${changed_paths[@]}"
 
+      - name: Validate locale staleness
+        run: node scripts/check-locale-staleness.mjs
+
       - name: Validate dependency resolution when manifests change
         run: |
           changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}")"
@@ -61,6 +64,33 @@ jobs:
           if printf '%s\n' "$changed" | grep -Eq "$manifest_pattern"; then
             pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
           fi
+
+  locale_validation:
+    name: Locale Validation
+    needs: [policy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run locale validation tests
+        run: pnpm --filter @paperclipai/ui exec -- vitest run src/i18n/locale-validation.test.ts
 
   typecheck_release_registry:
     name: Typecheck + Release Registry
@@ -133,7 +163,7 @@ jobs:
     # Preserve the legacy required-check name while the underlying work runs in parallel.
     name: verify
     if: ${{ always() }}
-    needs: [typecheck_release_registry, general_tests, build]
+    needs: [typecheck_release_registry, general_tests, build, locale_validation]
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -143,10 +173,12 @@ jobs:
           TYPECHECK_RELEASE_REGISTRY_RESULT: ${{ needs.typecheck_release_registry.result }}
           GENERAL_TESTS_RESULT: ${{ needs.general_tests.result }}
           BUILD_RESULT: ${{ needs.build.result }}
+          LOCALE_VALIDATION_RESULT: ${{ needs.locale_validation.result }}
         run: |
           test "$TYPECHECK_RELEASE_REGISTRY_RESULT" = "success"
           test "$GENERAL_TESTS_RESULT" = "success"
           test "$BUILD_RESULT" = "success"
+          test "$LOCALE_VALIDATION_RESULT" = "success"
 
   build:
     name: Build

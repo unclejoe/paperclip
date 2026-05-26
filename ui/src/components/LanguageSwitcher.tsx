@@ -12,6 +12,7 @@ import {
 const LOCALE_OPTIONS = [
   { value: "en" },
   { value: "zh-CN" },
+  { value: "zh-TW" },
 ] as const;
 
 export function LanguageSwitcher() {
